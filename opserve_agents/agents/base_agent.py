@@ -1,9 +1,15 @@
 import asyncio
+import os
 import anthropic
 from ..core.events import bus
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# Verify API key is available
+api_key = os.getenv("ANTHROPIC_API_KEY")
+if not api_key:
+    raise RuntimeError("ANTHROPIC_API_KEY not found in environment variables. Set it in Railway Variables.")
 
 
 class BaseAgent:
