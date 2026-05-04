@@ -1,0 +1,11 @@
+.env
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+.vscode/
+.claude/
+*.log
+.DS_Store
+.opserve/
