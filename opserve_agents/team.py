@@ -104,10 +104,7 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
 
             # Step 3: Risk Agent
             risk_output = await risk_agent.run(
-                json.dumps({
-                    "context": json.loads(context_output),
-                    "workflow": json.loads(workflow_output)
-                }, indent=2),
+                f"Context:\n{context_output}\n\nWorkflow:\n{workflow_output}",
                 {"project_id": project_id}
             )
 
@@ -119,26 +116,22 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
 
             # Step 5: Role Translator (with internal perspective review)
             final_output = await role_translator.run(
-                json.dumps({
-                    "context": json.loads(context_output),
-                    "workflow": json.loads(workflow_output),
-                    "risks": json.loads(risk_output),
-                    "impact": json.loads(impact_output)
-                }, indent=2),
+                f"Context:\n{context_output}\n\nWorkflow:\n{workflow_output}\n\nRisks:\n{risk_output}\n\nImpact:\n{impact_output}",
                 {"project_id": project_id}
             )
 
             # Write any memory updates from agents
-            final_json = json.loads(final_output)
+            try:
+                final_json = json.loads(final_output)
+            except json.JSONDecodeError:
+                final_json = {"error": "Invalid JSON from final output", "raw": final_output[:500]}
 
-            # Extract and write memory updates
-            for agent_output in [
-                json.loads(context_output),
-                json.loads(workflow_output),
-                json.loads(risk_output),
-                json.loads(impact_output),
-                final_json
-            ]:
+            # Extract and write memory updates (skip if JSON parsing fails)
+            for output_str in [context_output, workflow_output, risk_output, impact_output, final_output]:
+                try:
+                    agent_output = json.loads(output_str)
+                except json.JSONDecodeError:
+                    continue  # Skip invalid JSON
                 if "memory_updates" in agent_output:
                     for update in agent_output.get("memory_updates", []):
                         category = update.get("category")

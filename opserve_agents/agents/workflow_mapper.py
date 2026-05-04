@@ -14,7 +14,8 @@ Your job:
 
 You are turning messy context into structured workflow understanding.
 
-Output ONLY valid JSON with this exact structure:
+Output ONLY valid JSON. Return NOTHING else. No markdown, no explanation, just raw JSON:
+
 {
   "project_id": "",
   "project_map": [],
@@ -27,12 +28,8 @@ Output ONLY valid JSON with this exact structure:
   "workflow_summary": ""
 }
 
-Remember:
-- Map every task to an owner (or flag as unclear)
-- Show every dependency explicitly
-- List all handoffs with owners and deadlines
-- Be specific about what is missing or unclear
-- Do not use emojis or special symbols
+CRITICAL: Your response MUST be valid JSON that can be parsed by Python's json.loads().
+No markdown code blocks. No extra text. Only the JSON object.
 """
 
 
