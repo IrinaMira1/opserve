@@ -11,7 +11,7 @@ Not a chatbot. Not a project management tool. An **execution visibility and oper
 - **Detects execution risks** (missed deadlines, unclear ownership, unresolved dependencies, supplier delays)
 - **Estimates business impact** (timeline impact, revenue risk, reputation risk)
 - **Generates role-specific checklists** (executives, operations, engineering, suppliers) with actionable next steps
-- **Runs automatically** (every 15 minutes) or on demand
+- **Runs automatically** (every 15 seconds) or on demand
 
 ## Live Server (Railway)
 
@@ -60,7 +60,7 @@ curl -X POST http://localhost:8000/api/analyze \
 
 **Dual Triggers:**
 - Manual: `POST /api/analyze` endpoint
-- Automatic: Background poller runs every 15 minutes, detects new events, triggers analysis if anything changed
+- Automatic: Background poller runs every 15 seconds, detects new events, triggers analysis if anything changed
 
 **Multi-Project from Day One:** Analyze one or many projects. Executive dashboard shows all. Cross-project risk signals detected (same supplier, same owner blocking multiple projects).
 
@@ -121,10 +121,10 @@ ANTHROPIC_API_KEY=sk-ant-...
 
 ### Auto-Poller Interval
 
-Default: 15 minutes. Change in `team.py`:
+Default: 15 seconds. Change in `team.py`:
 
 ```python
-await start_auto_poller(interval_seconds=600)  # 10 minutes
+await start_auto_poller(interval_seconds=15)  # 15 seconds
 ```
 
 ## Company Memory Structure
