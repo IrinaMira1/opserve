@@ -50,6 +50,9 @@ Output ONLY valid JSON with this exact structure:
   "perspective_review_notes": ""
 }
 
+CRITICAL: Your response MUST be valid JSON that can be parsed by Python's json.loads().
+No markdown code blocks. No extra text. Only the JSON object.
+
 PERSPECTIVE REVIEW (internal quality check):
 Before returning, review each recommendation:
 - Has an owner?

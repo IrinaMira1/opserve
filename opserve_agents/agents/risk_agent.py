@@ -44,6 +44,9 @@ Output ONLY valid JSON with this exact structure:
   "memory_updates": []
 }
 
+CRITICAL: Your response MUST be valid JSON that can be parsed by Python's json.loads().
+No markdown code blocks. No extra text. Only the JSON object.
+
 Remember:
 - Every risk must be backed by evidence
 - Be specific about timeline impact

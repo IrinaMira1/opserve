@@ -31,7 +31,9 @@ class BaseAgent:
                 )
                 text = next((b.text for b in response.content if b.type == "text"), None)
                 if not text:
-                    raise RuntimeError(f"Claude returned no text content. Response: {response.model_dump()}")
+                    error_msg = f"{self.name}: Claude returned no text. Response content: {response.content}, Usage: {response.usage}"
+                    print(f"ERROR: {error_msg}", flush=True)
+                    raise RuntimeError(error_msg)
                 return text
             except Exception as e:
                 if attempt == max_retries - 1:
