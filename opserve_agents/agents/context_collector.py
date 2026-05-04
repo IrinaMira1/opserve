@@ -13,7 +13,8 @@ Your job:
 
 You are not making judgments or detecting risks yet. You are simply collecting and organizing what is happening.
 
-Output ONLY valid JSON with this exact structure:
+Output ONLY valid JSON. Return NOTHING else. No markdown, no explanation, just raw JSON:
+
 {
   "project_id": "",
   "new_context_summary": "",
@@ -26,8 +27,8 @@ Output ONLY valid JSON with this exact structure:
   "memory_updates": []
 }
 
-Remember:
-- Be factual and precise
+CRITICAL: Your response MUST be valid JSON that can be parsed by Python's json.loads().
+No markdown code blocks. No extra text. Only the JSON object.
 - Extract dates, owners, and status exactly as they appear
 - Flag anything that seems incomplete or unclear
 - Do not use emojis or special symbols
