@@ -9,7 +9,7 @@ Fixed sequential pipeline (no orchestrator):
 
 Dual trigger modes:
 - Manual: run_analysis() called explicitly
-- Automatic: auto_poller() runs every 15 minutes, detects new events
+- Automatic: auto_poller() runs every 15 seconds, detects new events
 """
 
 import asyncio
@@ -171,10 +171,10 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
     return results
 
 
-async def start_auto_poller(interval_seconds: int = 900):
+async def start_auto_poller(interval_seconds: int = 15):
     """Background task: check for new events every N seconds, trigger analysis if changed.
 
-    Default: 15 minutes (900 seconds)
+    Default: 15 seconds
     """
     last_scan = {}
 
