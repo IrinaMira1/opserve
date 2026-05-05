@@ -80,3 +80,67 @@ Which risks need immediate escalation?
 Be specific with evidence and timeline impact. Return structured JSON."""
 
         return await self._call_claude(prompt)
+
+    def _get_mock_response(self) -> str:
+        """Mock response for demo mode."""
+        return json.dumps({
+            "risks": [
+                {
+                    "risk_id": "R-001",
+                    "risk_title": "Critical task has no owner (T-47)",
+                    "severity": "Critical",
+                    "project": "Project Atlas",
+                    "owner": None,
+                    "department": "Operations",
+                    "why_it_matters": "Supplier validation is blocking the Friday release. No one is assigned to follow up.",
+                    "evidence": [
+                        "Trello: T-47 'Validate supplier datasheet' has owner=null",
+                        "Meeting notes: 'Action item assigned to team (no specific owner)'",
+                        "Task is marked 'Blocked' status"
+                    ],
+                    "missing_context": ["Who should own this?", "What's the supplier's exact ETA?"],
+                    "recommended_escalation": True,
+                    "estimated_timeline_impact": "If not resolved by EOD Thursday, Friday release will slip",
+                    "capacity_issue": "Alice and Bob available; Sarah overbooked"
+                },
+                {
+                    "risk_id": "R-002",
+                    "risk_title": "External supplier hasn't sent required file (3+ days overdue)",
+                    "severity": "Critical",
+                    "project": "Project Atlas",
+                    "owner": "Alice Johnson",
+                    "department": "External",
+                    "why_it_matters": "Validation can't proceed without the supplier file. This is the critical path item.",
+                    "evidence": [
+                        "Gmail (3 days old): Supplier says 'We have not yet sent the required input file. Will confirm by EOD Thursday.'",
+                        "Task status: Blocked",
+                        "No follow-up confirmation received"
+                    ],
+                    "missing_context": ["Confirmed supplier ETA?", "Backup plan if file doesn't arrive?"],
+                    "recommended_escalation": True,
+                    "estimated_timeline_impact": "Must resolve by EOD Thursday or Friday release is at risk",
+                    "capacity_issue": ""
+                },
+                {
+                    "risk_id": "R-003",
+                    "risk_title": "Owner (Sarah Chen) is overbooked Friday (6 meetings, 30-min free slot)",
+                    "severity": "High",
+                    "project": "Project Atlas",
+                    "owner": "Sarah Chen",
+                    "department": "Management",
+                    "why_it_matters": "If Sarah is the backup owner for T-47, she has almost no time to work on it Friday.",
+                    "evidence": [
+                        "Calendar: 9:00-10:00 standup, 10:30-11:30 architecture review, 14:00-14:30 CEO meeting, 15:00-16:00 budget, 16:30-17:15 retrospective",
+                        "Only free slot: 10:00-10:30 AM (30 minutes)",
+                        "No evening availability shown"
+                    ],
+                    "missing_context": ["Is Sarah the backup?", "Can any meetings be moved?"],
+                    "recommended_escalation": False,
+                    "estimated_timeline_impact": "Limits decision-making availability Friday",
+                    "capacity_issue": "Sarah overbooked; needs to delegate or reschedule"
+                }
+            ],
+            "top_risks_summary": "CRITICAL: Task #47 has no owner AND supplier file is missing (3+ days). This blocks the entire Friday release. Requires immediate executive decision on owner assignment and supplier follow-up.",
+            "overall_project_health": "Red",
+            "memory_updates": []
+        })

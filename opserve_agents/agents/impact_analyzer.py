@@ -64,3 +64,39 @@ Which risks need executive decision-making?
 Return structured JSON with business impact analysis."""
 
         return await self._call_claude(prompt)
+
+    def _get_mock_response(self) -> str:
+        """Mock response for demo mode."""
+        return json.dumps({
+            "impact_summary": "Friday release is at HIGH RISK of slipping. Root cause: supplier dependency unresolved + no task owner. Estimated impact: 24-48 hour delay, customer commitment at risk.",
+            "prioritized_risks": [
+                {
+                    "risk_id": "R-001",
+                    "priority": 1,
+                    "business_impact": "Release delay → customer commitment miss → reputation damage",
+                    "timeline_impact": "If not resolved by EOD Thursday, release slips to Monday (3-day delay)"
+                },
+                {
+                    "risk_id": "R-002",
+                    "priority": 2,
+                    "business_impact": "Supplier fails to deliver → cannot validate → release blocked",
+                    "timeline_impact": "If file arrives Friday morning, only 2-hour window to validate"
+                },
+                {
+                    "risk_id": "R-003",
+                    "priority": 3,
+                    "business_impact": "Owner unavailable Friday → decision delays",
+                    "timeline_impact": "Limits ability to execute Friday (but R-001/R-002 more critical)"
+                }
+            ],
+            "executive_attention_needed": [
+                "URGENT: Assign owner to T-47 TODAY (not Friday)",
+                "URGENT: Call supplier for confirmed ETA on file (not email)",
+                "URGENT: Develop contingency if supplier misses Thursday deadline",
+                "Possible actions: delay release, validate with partial data, find alternative input"
+            ],
+            "estimated_business_impact": "Revenue risk if customer expects Friday delivery. Reputation risk if release slips without notice. $X revenue at risk (depends on customer contract).",
+            "estimated_delivery_impact": "High probability (70%) of Friday slip. Likely Monday delivery instead (3-day delay).",
+            "decision_needed": "Executive decision required: (1) Assign owner immediately, (2) Confirm supplier ETA, (3) Approve contingency plan if needed.",
+            "memory_updates": []
+        })

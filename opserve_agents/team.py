@@ -93,35 +93,40 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
             raw_sources = await _fetch_all_sources(project_id)
             context_output = await context_collector.run(
                 json.dumps(raw_sources, indent=2),
-                {"project_id": project_id}
+                {"project_id": project_id},
+                use_mock=use_mock
             )
             print(f"DEBUG: ContextCollector output length: {len(context_output)}, first 100 chars: {context_output[:100]}", flush=True)
 
             # Step 2: Workflow Mapper
             workflow_output = await workflow_mapper.run(
                 context_output,
-                {"project_id": project_id}
+                {"project_id": project_id},
+                use_mock=use_mock
             )
             print(f"DEBUG: WorkflowMapper output length: {len(workflow_output)}, first 100 chars: {workflow_output[:100]}", flush=True)
 
             # Step 3: Risk Agent
             risk_output = await risk_agent.run(
                 f"Context:\n{context_output}\n\nWorkflow:\n{workflow_output}",
-                {"project_id": project_id}
+                {"project_id": project_id},
+                use_mock=use_mock
             )
             print(f"DEBUG: RiskAgent output length: {len(risk_output)}, first 100 chars: {risk_output[:100]}", flush=True)
 
             # Step 4: Impact Analyzer
             impact_output = await impact_analyzer.run(
                 risk_output,
-                {"project_id": project_id}
+                {"project_id": project_id},
+                use_mock=use_mock
             )
             print(f"DEBUG: ImpactAnalyzer output length: {len(impact_output)}, first 100 chars: {impact_output[:100]}", flush=True)
 
             # Step 5: Role Translator (with internal perspective review)
             final_output = await role_translator.run(
                 f"Context:\n{context_output}\n\nWorkflow:\n{workflow_output}\n\nRisks:\n{risk_output}\n\nImpact:\n{impact_output}",
-                {"project_id": project_id}
+                {"project_id": project_id},
+                use_mock=use_mock
             )
             print(f"DEBUG: RoleTranslator output length: {len(final_output)}, first 100 chars: {final_output[:100]}", flush=True)
 

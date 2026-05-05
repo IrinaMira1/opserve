@@ -61,3 +61,37 @@ Who is doing what? What is blocked? What decisions are pending?
 Return structured JSON."""
 
         return await self._call_claude(prompt)
+
+    def _get_mock_response(self) -> str:
+        """Mock response for demo mode."""
+        return json.dumps({
+            "project_id": "Project Atlas",
+            "new_context_summary": "Friday milestone with 3 critical tasks. Task #47 (Validate supplier datasheet) has no owner and is blocked. Supplier hasn't sent required file yet (3+ days). Sarah Chen overbooked Friday. Status: 40% complete, last updated Tuesday.",
+            "source_updates": [
+                {"source": "trello", "tasks_count": 3, "status_summary": "2 in progress, 1 blocked"},
+                {"source": "google_calendar", "events_count": 6, "owner": "Sarah Chen"},
+                {"source": "gmail", "unresolved_threads": 1, "priority": "high"},
+                {"source": "google_sheets", "completion": "40%", "status": "In Progress"},
+                {"source": "meeting_notes", "blocker_count": 1}
+            ],
+            "extracted_tasks": [
+                {"id": "T-45", "title": "Design review", "owner": "Alice Johnson", "status": "In Progress"},
+                {"id": "T-46", "title": "Implementation complete", "owner": "Bob Smith", "status": "In Progress"},
+                {"id": "T-47", "title": "Validate supplier datasheet", "owner": None, "status": "Blocked"}
+            ],
+            "extracted_decisions": [],
+            "extracted_action_items": [
+                {"task": "Confirm supplier datasheet status", "assigned_to": "team (no specific owner)"}
+            ],
+            "possible_blockers": [
+                "Task #47 has no owner",
+                "Supplier file not received",
+                "Sarah Chen overbooked Friday"
+            ],
+            "missing_context": [
+                "Exact owner for T-47",
+                "Supplier ETA for datasheet",
+                "Impact if deadline missed"
+            ],
+            "memory_updates": []
+        })

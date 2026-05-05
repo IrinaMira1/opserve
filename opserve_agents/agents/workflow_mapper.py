@@ -58,3 +58,33 @@ Where is ownership unclear? What steps might be missing?
 Return structured JSON."""
 
         return await self._call_claude(prompt)
+
+    def _get_mock_response(self) -> str:
+        """Mock response for demo mode."""
+        return json.dumps({
+            "project_id": "Project Atlas",
+            "project_map": [
+                {"task_id": "T-45", "title": "Design review", "owner": "Alice Johnson", "status": "In Progress", "due": "Friday"},
+                {"task_id": "T-46", "title": "Implementation complete", "owner": "Bob Smith", "status": "In Progress", "due": "Friday"},
+                {"task_id": "T-47", "title": "Validate supplier datasheet", "owner": None, "status": "Blocked", "due": "Friday"}
+            ],
+            "owners": [
+                {"name": "Alice Johnson", "assigned_tasks": 1, "capacity": "available"},
+                {"name": "Bob Smith", "assigned_tasks": 1, "capacity": "available"},
+                {"name": "Sarah Chen", "assigned_tasks": 0, "capacity": "overbooked", "notes": "6 meetings Friday"}
+            ],
+            "dependencies": [
+                {"from": "T-47", "to": "supplier", "type": "external_dependency", "status": "unresolved"}
+            ],
+            "handoffs": [
+                {"from": "supplier", "to": "Alice Johnson", "task": "T-47", "status": "waiting"}
+            ],
+            "unclear_ownership": ["T-47 (no owner assigned)"],
+            "missing_steps": [
+                "Confirm supplier ETA",
+                "Assign backup owner for T-47",
+                "Risk escalation decision"
+            ],
+            "status_conflicts": [],
+            "workflow_summary": "3-task Friday milestone. Critical blocker: supplier datasheet (T-47) has no owner and file not received. Alice and Bob have capacity. Sarah overbooked."
+        })

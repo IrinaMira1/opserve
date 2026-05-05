@@ -13,14 +13,19 @@ if not api_key:
 
 
 class BaseAgent:
-    def __init__(self, name: str, system_prompt: str, model: str = "claude-haiku-4-5-20251001"):
+    def __init__(self, name: str, system_prompt: str, model: str = "claude-haiku-4-5-20251001", use_mock: bool = False):
         self.name = name
         self.system_prompt = system_prompt
         self.model = model
         self.status = "idle"
+        self.use_mock = use_mock
         self._client = anthropic.AsyncAnthropic()
 
     async def _call_claude(self, prompt: str, max_retries: int = 3) -> str:
+        # In mock mode, return hardcoded responses per agent
+        if self.use_mock:
+            return self._get_mock_response()
+
         for attempt in range(max_retries):
             try:
                 response = await self._client.messages.create(
@@ -40,9 +45,15 @@ class BaseAgent:
                     raise RuntimeError(f"{self.name} failed after {max_retries} attempts: {str(e)}")
                 await asyncio.sleep(2 ** attempt)
 
-    async def run(self, content: str, metadata: dict | None = None) -> str:
+    def _get_mock_response(self) -> str:
+        """Return hardcoded mock response for demo mode."""
+        # Default empty response - subclasses override
+        return "{}"
+
+    async def run(self, content: str, metadata: dict | None = None, use_mock: bool = False) -> str:
         metadata = metadata or {}
         self.status = "working"
+        self.use_mock = use_mock  # Override for this run
 
         await bus.emit("agent_start", self.name, {
             "task": content[:200],
