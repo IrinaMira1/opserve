@@ -80,6 +80,7 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
     Returns:
         dict with analysis results for each project
     """
+    print(f"DEBUG: run_analysis() called with use_mock={use_mock}, project_ids={project_ids}", flush=True)
     results = {}
 
     for project_id in project_ids:

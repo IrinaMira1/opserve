@@ -23,12 +23,13 @@ class BaseAgent:
 
     async def _call_claude(self, prompt: str, max_retries: int = 3) -> str:
         # In mock mode, return hardcoded responses per agent
+        print(f"DEBUG: {self.name}._call_claude() entered with self.use_mock={self.use_mock}", flush=True)
         if self.use_mock:
             mock_response = self._get_mock_response()
             print(f"DEBUG: {self.name} returning mock response (length={len(mock_response)})", flush=True)
             return mock_response
 
-        print(f"DEBUG: {self.name} calling real Claude API (use_mock=False)", flush=True)
+        print(f"DEBUG: {self.name} calling real Claude API (use_mock={self.use_mock})", flush=True)
         for attempt in range(max_retries):
             try:
                 response = await self._client.messages.create(
@@ -59,6 +60,7 @@ class BaseAgent:
         metadata = metadata or {}
         self.status = "working"
         self.use_mock = use_mock  # Override for this run
+        print(f"DEBUG: {self.name}.run() called with use_mock={use_mock}", flush=True)
 
         await bus.emit("agent_start", self.name, {
             "task": content[:200],
