@@ -83,6 +83,58 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
     print(f"DEBUG: run_analysis() called with use_mock={use_mock}, project_ids={project_ids}", flush=True)
     results = {}
 
+    # Fast path: if use_mock, return hardcoded demo results immediately
+    if use_mock:
+        print(f"DEBUG: use_mock=True, returning hardcoded demo results", flush=True)
+        for project_id in project_ids:
+            demo_analysis = {
+                "project_id": project_id,
+                "risks": [
+                    {
+                        "risk_id": "R-001",
+                        "risk_title": "Critical task has no owner (T-47)",
+                        "severity": "Critical",
+                        "evidence": ["Task #47 has no assigned owner", "Supplier file missing (3+ days overdue)"]
+                    },
+                    {
+                        "risk_id": "R-002",
+                        "risk_title": "External supplier hasn't sent required file",
+                        "severity": "Critical",
+                        "evidence": ["Email 3 days old: supplier says file not sent yet"]
+                    }
+                ],
+                "action_items": [
+                    {"role": "executive", "task": "Assign owner to T-47 today", "status": "open"},
+                    {"role": "operations", "task": "Call supplier for confirmed ETA", "status": "open"},
+                    {"role": "engineering", "task": "Prepare contingency validation plan", "status": "open"}
+                ],
+                "blockers": [
+                    {"blocker": "No owner assigned to critical task T-47", "owner": None},
+                    {"blocker": "Supplier file not received (3+ days)", "owner": "Supplier"},
+                    {"blocker": "Sarah Chen overbooked Friday", "owner": "Sarah Chen"}
+                ],
+                "decisions": [
+                    {"decision": "Assign backup owner to T-47", "owner": "Executive", "status": "pending"},
+                    {"decision": "Contact supplier for ETA confirmation", "owner": "Operations", "status": "pending"}
+                ],
+                "overall_health": "Red"
+            }
+            results[project_id] = {
+                "status": "success",
+                "analysis": demo_analysis,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+            # Write demo data to memory
+            memory.append(project_id, "risks", demo_analysis["risks"][0])
+            memory.append(project_id, "risks", demo_analysis["risks"][1])
+            for item in demo_analysis["action_items"]:
+                memory.append(project_id, "action_items", item)
+            for blocker in demo_analysis["blockers"]:
+                memory.append(project_id, "blockers", blocker)
+            for decision in demo_analysis["decisions"]:
+                memory.append(project_id, "decisions", decision)
+        return results
+
     for project_id in project_ids:
         await bus.emit("analysis_start", "Team", {
             "project": project_id,
