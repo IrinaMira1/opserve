@@ -85,8 +85,9 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
 
     # Fast path: if use_mock, return hardcoded demo results immediately
     if use_mock:
-        print(f"DEBUG: use_mock=True, returning hardcoded demo results", flush=True)
+        print(f"DEBUG: use_mock=True, returning hardcoded demo results immediately (no agents)", flush=True)
         for project_id in project_ids:
+            print(f"DEBUG: Creating demo results for {project_id}", flush=True)
             demo_analysis = {
                 "project_id": project_id,
                 "risks": [
@@ -124,15 +125,18 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
                 "analysis": demo_analysis,
                 "timestamp": datetime.utcnow().isoformat()
             }
-            # Write demo data to memory
-            memory.append(project_id, "risks", demo_analysis["risks"][0])
-            memory.append(project_id, "risks", demo_analysis["risks"][1])
-            for item in demo_analysis["action_items"]:
-                memory.append(project_id, "action_items", item)
-            for blocker in demo_analysis["blockers"]:
-                memory.append(project_id, "blockers", blocker)
-            for decision in demo_analysis["decisions"]:
-                memory.append(project_id, "decisions", decision)
+            # Write demo data to memory (don't fail if memory fails)
+            try:
+                memory.append(project_id, "risks", demo_analysis["risks"][0])
+                memory.append(project_id, "risks", demo_analysis["risks"][1])
+                for item in demo_analysis["action_items"]:
+                    memory.append(project_id, "action_items", item)
+                for blocker in demo_analysis["blockers"]:
+                    memory.append(project_id, "blockers", blocker)
+                for decision in demo_analysis["decisions"]:
+                    memory.append(project_id, "decisions", decision)
+            except Exception as e:
+                print(f"WARNING: Failed to write to memory: {str(e)}", flush=True)
         return results
 
     for project_id in project_ids:
