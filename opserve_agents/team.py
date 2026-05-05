@@ -95,35 +95,42 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
                 json.dumps(raw_sources, indent=2),
                 {"project_id": project_id}
             )
+            print(f"DEBUG: ContextCollector output length: {len(context_output)}, first 100 chars: {context_output[:100]}", flush=True)
 
             # Step 2: Workflow Mapper
             workflow_output = await workflow_mapper.run(
                 context_output,
                 {"project_id": project_id}
             )
+            print(f"DEBUG: WorkflowMapper output length: {len(workflow_output)}, first 100 chars: {workflow_output[:100]}", flush=True)
 
             # Step 3: Risk Agent
             risk_output = await risk_agent.run(
                 f"Context:\n{context_output}\n\nWorkflow:\n{workflow_output}",
                 {"project_id": project_id}
             )
+            print(f"DEBUG: RiskAgent output length: {len(risk_output)}, first 100 chars: {risk_output[:100]}", flush=True)
 
             # Step 4: Impact Analyzer
             impact_output = await impact_analyzer.run(
                 risk_output,
                 {"project_id": project_id}
             )
+            print(f"DEBUG: ImpactAnalyzer output length: {len(impact_output)}, first 100 chars: {impact_output[:100]}", flush=True)
 
             # Step 5: Role Translator (with internal perspective review)
             final_output = await role_translator.run(
                 f"Context:\n{context_output}\n\nWorkflow:\n{workflow_output}\n\nRisks:\n{risk_output}\n\nImpact:\n{impact_output}",
                 {"project_id": project_id}
             )
+            print(f"DEBUG: RoleTranslator output length: {len(final_output)}, first 100 chars: {final_output[:100]}", flush=True)
 
             # Write any memory updates from agents
             try:
                 final_json = json.loads(final_output)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
+                error_msg = f"JSON parse error from RoleTranslator: {str(e)}. Output: {final_output[:500]}"
+                print(f"ERROR: {error_msg}", flush=True)
                 final_json = {"error": "Invalid JSON from final output", "raw": final_output[:500]}
 
             # Extract and write to memory (auto-extract risks, action items, decisions)
@@ -132,13 +139,15 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
                 if "risks" in risk_json:
                     for risk in risk_json.get("risks", []):
                         memory.append(project_id, "risks", risk)
-            except json.JSONDecodeError:
-                pass
+                    print(f"DEBUG: Wrote {len(risk_json.get('risks', []))} risks to memory", flush=True)
+            except json.JSONDecodeError as e:
+                print(f"ERROR: Failed to parse RiskAgent output: {str(e)}, output: {risk_output[:200]}", flush=True)
 
             try:
                 final_json_for_memory = json.loads(final_output)
                 # Extract action items from role_specific_outputs
                 role_outputs = final_json_for_memory.get("role_specific_outputs", {})
+                action_count = 0
                 for role, role_data in role_outputs.items():
                     if isinstance(role_data, dict) and "checklist" in role_data:
                         for item in role_data.get("checklist", []):
@@ -149,8 +158,11 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
                                 "created": datetime.utcnow().isoformat()
                             }
                             memory.append(project_id, "action_items", action_item)
-            except json.JSONDecodeError:
-                pass
+                            action_count += 1
+                if action_count > 0:
+                    print(f"DEBUG: Wrote {action_count} action items to memory", flush=True)
+            except json.JSONDecodeError as e:
+                print(f"ERROR: Failed to parse RoleTranslator output for memory: {str(e)}, output: {final_output[:200]}", flush=True)
 
             # Also extract explicit memory_updates if present
             for output_str in [context_output, workflow_output, risk_output, impact_output, final_output]:
