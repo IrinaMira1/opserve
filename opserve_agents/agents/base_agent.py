@@ -24,8 +24,11 @@ class BaseAgent:
     async def _call_claude(self, prompt: str, max_retries: int = 3) -> str:
         # In mock mode, return hardcoded responses per agent
         if self.use_mock:
-            return self._get_mock_response()
+            mock_response = self._get_mock_response()
+            print(f"DEBUG: {self.name} returning mock response (length={len(mock_response)})", flush=True)
+            return mock_response
 
+        print(f"DEBUG: {self.name} calling real Claude API (use_mock=False)", flush=True)
         for attempt in range(max_retries):
             try:
                 response = await self._client.messages.create(
@@ -39,6 +42,8 @@ class BaseAgent:
                     error_msg = f"{self.name}: Claude returned no text. Response content: {response.content}, Usage: {response.usage}"
                     print(f"ERROR: {error_msg}", flush=True)
                     raise RuntimeError(error_msg)
+                if not text.strip():
+                    raise ValueError(f"Empty Anthropic response for agent {self.name}")
                 return text
             except Exception as e:
                 if attempt == max_retries - 1:

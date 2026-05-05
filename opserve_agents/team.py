@@ -131,43 +131,62 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
             print(f"DEBUG: RoleTranslator output length: {len(final_output)}, first 100 chars: {final_output[:100]}", flush=True)
 
             # Write any memory updates from agents
-            try:
-                final_json = json.loads(final_output)
-            except json.JSONDecodeError as e:
-                error_msg = f"JSON parse error from RoleTranslator: {str(e)}. Output: {final_output[:500]}"
+            if not final_output or not final_output.strip():
+                error_msg = f"RoleTranslator returned empty output"
                 print(f"ERROR: {error_msg}", flush=True)
-                final_json = {"error": "Invalid JSON from final output", "raw": final_output[:500]}
+                final_json = {"error": "Empty output from RoleTranslator"}
+            else:
+                try:
+                    final_json = json.loads(final_output)
+                except json.JSONDecodeError as e:
+                    error_msg = f"JSON parse error from RoleTranslator: {str(e)}. Output length={len(final_output)}, first 500={final_output[:500]}"
+                    print(f"ERROR: {error_msg}", flush=True)
+                    final_json = {"error": "Invalid JSON from final output", "raw": final_output[:500]}
+                except Exception as e:
+                    error_msg = f"Exception parsing RoleTranslator output: {str(e)}"
+                    print(f"ERROR: {error_msg}", flush=True)
+                    final_json = {"error": str(e)}
 
             # Extract and write to memory (auto-extract risks, action items, decisions)
-            try:
-                risk_json = json.loads(risk_output)
-                if "risks" in risk_json:
-                    for risk in risk_json.get("risks", []):
-                        memory.append(project_id, "risks", risk)
-                    print(f"DEBUG: Wrote {len(risk_json.get('risks', []))} risks to memory", flush=True)
-            except json.JSONDecodeError as e:
-                print(f"ERROR: Failed to parse RiskAgent output: {str(e)}, output: {risk_output[:200]}", flush=True)
+            if not risk_output or not risk_output.strip():
+                print(f"ERROR: RiskAgent returned empty output", flush=True)
+            else:
+                try:
+                    risk_json = json.loads(risk_output)
+                    if "risks" in risk_json:
+                        for risk in risk_json.get("risks", []):
+                            memory.append(project_id, "risks", risk)
+                        print(f"DEBUG: Wrote {len(risk_json.get('risks', []))} risks to memory", flush=True)
+                except json.JSONDecodeError as e:
+                    print(f"ERROR: Failed to parse RiskAgent output: {str(e)}, output_length={len(risk_output)}, first_200={risk_output[:200]}", flush=True)
+                except Exception as e:
+                    print(f"ERROR: Exception processing RiskAgent output: {str(e)}", flush=True)
 
-            try:
-                final_json_for_memory = json.loads(final_output)
-                # Extract action items from role_specific_outputs
-                role_outputs = final_json_for_memory.get("role_specific_outputs", {})
-                action_count = 0
-                for role, role_data in role_outputs.items():
-                    if isinstance(role_data, dict) and "checklist" in role_data:
-                        for item in role_data.get("checklist", []):
-                            action_item = {
-                                "role": role,
-                                "task": item,
-                                "status": "open",
-                                "created": datetime.utcnow().isoformat()
-                            }
-                            memory.append(project_id, "action_items", action_item)
-                            action_count += 1
-                if action_count > 0:
-                    print(f"DEBUG: Wrote {action_count} action items to memory", flush=True)
-            except json.JSONDecodeError as e:
-                print(f"ERROR: Failed to parse RoleTranslator output for memory: {str(e)}, output: {final_output[:200]}", flush=True)
+            if not final_output or not final_output.strip():
+                print(f"ERROR: RoleTranslator returned empty output", flush=True)
+            else:
+                try:
+                    final_json_for_memory = json.loads(final_output)
+                    # Extract action items from role_specific_outputs
+                    role_outputs = final_json_for_memory.get("role_specific_outputs", {})
+                    action_count = 0
+                    for role, role_data in role_outputs.items():
+                        if isinstance(role_data, dict) and "checklist" in role_data:
+                            for item in role_data.get("checklist", []):
+                                action_item = {
+                                    "role": role,
+                                    "task": item,
+                                    "status": "open",
+                                    "created": datetime.utcnow().isoformat()
+                                }
+                                memory.append(project_id, "action_items", action_item)
+                                action_count += 1
+                    if action_count > 0:
+                        print(f"DEBUG: Wrote {action_count} action items to memory", flush=True)
+                except json.JSONDecodeError as e:
+                    print(f"ERROR: Failed to parse RoleTranslator output: {str(e)}, output_length={len(final_output)}, first_200={final_output[:200]}", flush=True)
+                except Exception as e:
+                    print(f"ERROR: Exception processing RoleTranslator output: {str(e)}", flush=True)
 
             # Also extract explicit memory_updates if present
             for output_str in [context_output, workflow_output, risk_output, impact_output, final_output]:
