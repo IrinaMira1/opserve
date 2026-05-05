@@ -126,12 +126,38 @@ async def run_analysis(project_ids: list[str], use_mock: bool = False) -> dict:
             except json.JSONDecodeError:
                 final_json = {"error": "Invalid JSON from final output", "raw": final_output[:500]}
 
-            # Extract and write memory updates (skip if JSON parsing fails)
+            # Extract and write to memory (auto-extract risks, action items, decisions)
+            try:
+                risk_json = json.loads(risk_output)
+                if "risks" in risk_json:
+                    for risk in risk_json.get("risks", []):
+                        memory.append(project_id, "risks", risk)
+            except json.JSONDecodeError:
+                pass
+
+            try:
+                final_json_for_memory = json.loads(final_output)
+                # Extract action items from role_specific_outputs
+                role_outputs = final_json_for_memory.get("role_specific_outputs", {})
+                for role, role_data in role_outputs.items():
+                    if isinstance(role_data, dict) and "checklist" in role_data:
+                        for item in role_data.get("checklist", []):
+                            action_item = {
+                                "role": role,
+                                "task": item,
+                                "status": "open",
+                                "created": datetime.utcnow().isoformat()
+                            }
+                            memory.append(project_id, "action_items", action_item)
+            except json.JSONDecodeError:
+                pass
+
+            # Also extract explicit memory_updates if present
             for output_str in [context_output, workflow_output, risk_output, impact_output, final_output]:
                 try:
                     agent_output = json.loads(output_str)
                 except json.JSONDecodeError:
-                    continue  # Skip invalid JSON
+                    continue
                 if "memory_updates" in agent_output:
                     for update in agent_output.get("memory_updates", []):
                         category = update.get("category")
